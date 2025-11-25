@@ -10,11 +10,24 @@ export async function serveStatic(app: Express, _server: Server) {
   const __filename = fileURLToPath(import.meta.url);
   const __dirname = path.dirname(__filename);
 
-  const distPath = path.resolve(__dirname, "public");
+  const candidates = [
+    path.resolve(__dirname, "public"), // when server is compiled into dist and public is next to it
+    path.resolve(__dirname, "../dist/public"), // running from source, root/dist/public
+    path.resolve(__dirname, "../client/dist"), // alternative client dist path
+    path.resolve(__dirname, "../dist"), // fallback if client output is in dist
+  ];
 
-  if (!fs.existsSync(distPath)) {
+  let distPath: string | undefined = undefined;
+  for (const c of candidates) {
+    if (fs.existsSync(c)) {
+      distPath = c;
+      break;
+    }
+  }
+
+  if (!distPath) {
     throw new Error(
-      `Could not find the build directory: ${distPath}, make sure to build the client first`,
+      `Could not find the client build. Checked locations: ${candidates.join(", ")}. Run \`npm run build\` at the project root (this runs Vite to build the client into \`dist/public\` and bundles the server into \`dist/index.js\`).`,
     );
   }
 
