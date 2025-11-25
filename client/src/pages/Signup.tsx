@@ -64,6 +64,12 @@ export default function Signup() {
   });
 
   const handleRoleSelect = (role: "admin" | "customer") => {
+    if (role === "customer") {
+      // For customer, skip directly to scanner
+      setLocation("/scan");
+      return;
+    }
+    // For admin, proceed to credentials
     setSelectedRole(role);
     form.setValue("role", role);
     setStep("credentials");
@@ -329,6 +335,17 @@ export default function Signup() {
                 >
                   Back
                 </Button>
+                {selectedRole === "customer" && (
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    className="flex-1 h-12"
+                    onClick={() => setLocation("/scan")}
+                    data-testid="button-skip-customer"
+                  >
+                    Skip & Scan
+                  </Button>
+                )}
                 <Button
                   type="submit"
                   className="flex-1 h-12 font-semibold"

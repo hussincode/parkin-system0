@@ -1,17 +1,45 @@
-import { drizzle } from "drizzle-orm/neon-serverless";
-import { Pool, neonConfig } from "@neondatabase/serverless";
+import { drizzle } from "drizzle-orm/node-postgres";
+import fs from "fs";
+import pg from "pg";
 import { users, cars, visits, type User, type InsertUser, type Car, type InsertCar, type Visit } from "@shared/schema";
 import { eq, desc } from "drizzle-orm";
-import ws from "ws";
+import { createClient } from '@supabase/supabase-js';
 
-neonConfig.webSocketConstructor = ws;
+const { Pool } = pg;
 
 if (!process.env.DATABASE_URL) {
   throw new Error("DATABASE_URL must be set");
 }
 
-const pool = new Pool({ connectionString: process.env.DATABASE_URL });
+// Configure SSL based on environment or defaults
+let sslConfig: any = undefined;
+if (process.env.NODE_EXTRA_CA_CERTS && fs.existsSync(process.env.NODE_EXTRA_CA_CERTS)) {
+  sslConfig = { ca: fs.readFileSync(process.env.NODE_EXTRA_CA_CERTS).toString() };
+} else if (process.env.NODE_ENV === 'production') {
+  // In production, always require proper SSL
+  sslConfig = { rejectUnauthorized: true };
+} else {
+  // In development, allow self-signed certs for quick testing
+  sslConfig = { rejectUnauthorized: false };
+}
+
+const pool = new Pool({ 
+  connectionString: process.env.DATABASE_URL,
+  ssl: sslConfig,
+});
 const db = drizzle(pool);
+
+const SUPABASE_URL = process.env.SUPABASE_URL;
+const SUPABASE_KEY = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_KEY;
+
+if (!SUPABASE_URL) {
+  throw new Error("SUPABASE_URL must be set");
+}
+if (!SUPABASE_KEY) {
+  throw new Error("SUPABASE_SERVICE_KEY or SUPABASE_KEY must be set");
+}
+
+const supabase = createClient(SUPABASE_URL, SUPABASE_KEY, { auth: { persistSession: false }});
 
 export interface IStorage {
   // User operations

@@ -1,23 +1,13 @@
 import { useLocation } from "wouter";
-import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Car, QrCode, FileSpreadsheet, Shield } from "lucide-react";
-import { useAuth } from "@/hooks/useAuth";
-import { useEffect } from "react";
+import { Car, QrCode, Shield } from "lucide-react";
 
 export default function Landing() {
   const [, setLocation] = useLocation();
-  const { user } = useAuth();
-
-  useEffect(() => {
-    if (user) {
-      setLocation("/home");
-    }
-  }, [user, setLocation]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/10 flex items-center justify-center p-4">
-      <div className="max-w-md w-full mx-auto">
+      <div className="max-w-2xl w-full mx-auto">
         <Card className="p-6 md:p-8 text-center space-y-6">
           <div className="flex items-center justify-center mb-4">
             <div className="bg-primary/10 p-4 rounded-full">
@@ -34,45 +24,63 @@ export default function Landing() {
             </p>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 py-4">
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <QrCode className="size-6 text-primary" />
-              </div>
-              <p className="text-xs text-muted-foreground">QR Scanning</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <FileSpreadsheet className="size-6 text-primary" />
-              </div>
-              <p className="text-xs text-muted-foreground">Visit Reports</p>
-            </div>
-            <div className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Shield className="size-6 text-primary" />
-              </div>
-              <p className="text-xs text-muted-foreground">Secure Access</p>
-            </div>
+          <div className="text-lg font-semibold text-foreground pt-4">
+            Choose your role to continue
           </div>
 
-          <div className="space-y-3 pt-2">
-            <Button
-              size="lg"
-              className="w-full h-14 text-lg font-semibold"
-              onClick={() => setLocation("/signup")}
-              data-testid="button-get-started"
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Admin Card */}
+            <button
+              onClick={() => setLocation("/login")}
+              className="group"
+              data-testid="button-admin"
             >
-              Get Started
-            </Button>
-            
+              <Card className="h-48 hover:shadow-lg transition-all cursor-pointer hover-elevate active-elevate-2 border-2 border-transparent hover:border-primary/30">
+                <div className="flex flex-col items-center justify-center h-full space-y-4 p-6">
+                  <div className="bg-primary/10 p-4 rounded-full">
+                    <Shield className="size-10 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">Admin</h2>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Manage parking operations and view reports
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </button>
+
+            {/* Customer Card */}
+            <button
+              onClick={() => setLocation("/scan")}
+              className="group"
+              data-testid="button-customer"
+            >
+              <Card className="h-48 hover:shadow-lg transition-all cursor-pointer hover-elevate active-elevate-2 border-2 border-transparent hover:border-primary/30">
+                <div className="flex flex-col items-center justify-center h-full space-y-4 p-6">
+                  <div className="bg-primary/10 p-4 rounded-full">
+                    <QrCode className="size-10 text-primary" />
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold">Customer</h2>
+                    <p className="text-sm text-muted-foreground mt-2">
+                      Quick access to parking scanner
+                    </p>
+                  </div>
+                </div>
+              </Card>
+            </button>
+          </div>
+
+          <div className="text-center pt-4">
             <p className="text-sm text-muted-foreground">
-              Already have an account?{" "}
+              Don't have a customer account?{" "}
               <button
-                onClick={() => setLocation("/login")}
+                onClick={() => setLocation("/signup")}
                 className="text-primary hover:underline font-medium"
-                data-testid="link-login"
+                data-testid="link-signup"
               >
-                Sign In
+                Create one now
               </button>
             </p>
           </div>

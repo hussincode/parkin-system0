@@ -1,7 +1,7 @@
 import type { Express, Request, Response, NextFunction } from "express";
 import { createServer, type Server } from "http";
 import session from "express-session";
-import { storage } from "./storage";
+import { storage } from "./supabase-storage";
 import bcrypt from "bcryptjs";
 import QRCode from "qrcode";
 import { randomBytes } from "crypto";
@@ -183,8 +183,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // QR scanning endpoint (all authenticated users)
-  app.post("/api/scan", requireAuth, async (req, res) => {
+  // QR scanning endpoint (allow public scanning so customers can scan without login)
+  app.post("/api/scan", async (req, res) => {
     try {
       const result = scanSchema.safeParse(req.body);
       if (!result.success) {

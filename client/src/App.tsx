@@ -11,6 +11,8 @@ import Home from "@/pages/Home";
 import RegisterCar from "@/pages/RegisterCar";
 import Scanner from "@/pages/Scanner";
 import Visits from "@/pages/Visits";
+import Footer from "@/components/Footer";
+import Header from "@/components/Header";
 
 function Router() {
   return (
@@ -32,7 +34,11 @@ function App() {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <Toaster />
-        <Router />
+        <Header />
+        <div className="min-h-screen pt-16 pb-20">
+          <Router />
+        </div>
+        <Footer />
       </TooltipProvider>
     </QueryClientProvider>
   );

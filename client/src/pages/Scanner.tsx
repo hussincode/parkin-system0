@@ -1,41 +1,33 @@
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { ProtectedRoute } from "@/components/ProtectedRoute";
-import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { ArrowLeft, Camera, QrCode } from "lucide-react";
-import { Html5QrcodeScanner } from "html5-qrcode";
+import QRScanner from "@/components/QRScanner";
+import { scanQRCode } from "@/lib/api";
 
 export default function Scanner() {
-  return (
-    <ProtectedRoute>
-      <ScannerContent />
-    </ProtectedRoute>
-  );
+  return <ScannerContent />;
 }
 
 function ScannerContent() {
   const [, setLocation] = useLocation();
   const { toast } = useToast();
-  const [isScanning, setIsScanning] = useState(false);
-  const scannerRef = useRef<Html5QrcodeScanner | null>(null);
-  const scannerDivRef = useRef<HTMLDivElement>(null);
+  const [isScanning, setIsScanning] = useState(true);
 
   const scanMutation = useMutation({
-    mutationFn: (qrCode: string) => apiRequest("POST", "/api/scan", { qrCode }),
+    mutationFn: (qrCode: string) => scanQRCode(qrCode),
     onSuccess: (response: { message: string; type: string; visit?: any }) => {
       toast({
         title: response.type === "checkin" ? "Check-in Successful" : "Check-out Successful",
         description: response.message,
       });
-      
-      if (scannerRef.current) {
-        scannerRef.current.clear();
-      }
+
+      // After a successful scan we can pause scanning briefly
       setIsScanning(false);
+      setTimeout(() => setIsScanning(true), 1200);
     },
     onError: (error: Error) => {
       toast({
@@ -46,47 +38,10 @@ function ScannerContent() {
     },
   });
 
-  const startScanner = () => {
-    if (!scannerDivRef.current) return;
-    
-    setIsScanning(true);
-    
-    const scanner = new Html5QrcodeScanner(
-      "qr-reader",
-      {
-        fps: 10,
-        qrbox: { width: 250, height: 250 },
-      },
-      false
-    );
-
-    scanner.render(
-      (decodedText) => {
-        scanMutation.mutate(decodedText);
-      },
-      (error) => {
-        console.log("QR scan error:", error);
-      }
-    );
-
-    scannerRef.current = scanner;
+  const handleScan = (decodedText: string) => {
+    if (scanMutation.isPending) return;
+    scanMutation.mutate(decodedText);
   };
-
-  const stopScanner = () => {
-    if (scannerRef.current) {
-      scannerRef.current.clear();
-      scannerRef.current = null;
-    }
-    setIsScanning(false);
-  };
-
-  useEffect(() => {
-    return () => {
-      if (scannerRef.current) {
-        scannerRef.current.clear();
-      }
-    };
-  }, []);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-primary/5 to-accent/10 p-4 md:p-8">
@@ -113,57 +68,19 @@ function ScannerContent() {
             </div>
           </div>
 
-          {!isScanning ? (
-            <div className="text-center space-y-6 py-8">
-              <div className="flex items-center justify-center">
-                <div className="bg-primary/10 p-8 rounded-full">
-                  <Camera className="size-20 text-primary" />
-                </div>
-              </div>
-              
-              <div>
-                <h3 className="text-lg font-semibold mb-2">Ready to Scan</h3>
-                <p className="text-sm text-muted-foreground">
-                  Click the button below to start your camera and scan QR codes
-                </p>
-              </div>
-
-              <Button
-                size="lg"
-                className="h-14 px-8 text-lg font-semibold"
-                onClick={startScanner}
-                data-testid="button-start-scanner"
-              >
-                <Camera className="size-5 mr-2" />
-                Start Scanner
-              </Button>
+          <div className="space-y-4">
+            <div className="rounded-lg overflow-hidden">
+              {isScanning && <QRScanner onScan={handleScan} />}
             </div>
-          ) : (
-            <div className="space-y-4">
-              <div
-                id="qr-reader"
-                ref={scannerDivRef}
-                className="rounded-lg overflow-hidden"
-                data-testid="scanner-view"
-              ></div>
 
-              <div className="bg-accent/20 p-4 rounded-lg">
-                <p className="text-sm text-center">
-                  Position the QR code within the frame to scan
-                </p>
-              </div>
-
-              <Button
-                variant="outline"
-                className="w-full h-12"
-                onClick={stopScanner}
-                disabled={scanMutation.isPending}
-                data-testid="button-stop-scanner"
-              >
-                {scanMutation.isPending ? "Processing..." : "Stop Scanner"}
-              </Button>
+            <div className="bg-accent/20 p-4 rounded-lg">
+              <p className="text-sm text-center">Position the QR code within the frame to scan</p>
             </div>
-          )}
+
+            <Button variant="outline" className="w-full h-12" onClick={() => setIsScanning((s) => !s)}>
+              {isScanning ? "Stop Scanner" : "Start Scanner"}
+            </Button>
+          </div>
         </Card>
       </div>
     </div>
